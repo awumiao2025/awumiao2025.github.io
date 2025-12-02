@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript赛车游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #2c3e50, #1a1a2e);
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #f1c40f;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ecf0f1;
+            margin-bottom: 20px;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #34495e;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .score-item {
+            text-align: center;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+        
+        .controls {
+            margin-top: 25px;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #f1c40f;
+        }
+        
+        .key-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+        
+        .key {
+            background-color: #2c3e50;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #1a252f;
+        }
+        
+        .arrows {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .arrow-row {
+            display: flex;
+        }
+        
+        .arrow-key {
+            width: 50px;
+            height: 50px;
+            background-color: #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 0 #1a252f;
+        }
+        
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 10;
+            display: none;
+        }
+        
+        .game-message h2 {
+            color: #f1c40f;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .game-message p {
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+        }
+        
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #c0392b;
+        }
+        
+        .instructions {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .instructions h3 {
+            color: #f1c40f;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .score-board {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .key-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>JavaScript赛车游戏</h1>
+        <p class="subtitle">躲避障碍车，尽可能获得高分！</p>
+    </div>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        
+        <div class="game-message" id="gameMessage">
+            <h2 id="messageTitle">游戏结束</h2>
+            <p>你的得分: <span id="finalScore">0</span></p>
+            <button id="restartButton">重新开始</button>
+        </div>
+    </div>
+    
+    <div class="score-board">
+        <div class="score-item">
+            <div>得分</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+        <div class="score-item">
+            <div>最高分</div>
+            <div class="score-value" id="highScore">0</div>
+        </div>
+        <div class="score-item">
+            <div>速度</div>
+            <div class="score-value" id="speed">0</div>
+        </div>
+        <div class="score-item">
+            <div>已躲避</div>
+            <div class="score-value" id="passed">0</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <h3>游戏控制</h3>
+        <div class="key-container">
+            <div>
+                <div class="key">A / ← 左转</div>
+                <div class="key">D / → 右转</div>
+            </div>
+            <div class="arrows">
+                <div class="arrow-row">
+                    <div class="arrow-key">←</div>
+                </div>
+                <div class="arrow-row">
+                    <div class="arrow-key">→</div>
+                </div>
+            </div>
+            <div>
+                <div class="key">W / ↑ 加速</div>
+                <div class="key">S / ↓ 减速</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <h3>游戏说明</h3>
+        <ul>
+            <li>使用方向键或A/D键控制赛车左右移动</li>
+            <li>使用W/S键或上下箭头控制赛车加速/减速</li>
+            <li>躲避道路上的障碍车，碰撞会导致游戏结束</li>
+            <li>每成功躲避一辆车得10分，速度越快得分越高</li>
+            <li>游戏会随着时间推移逐渐加快速度</li>
+        </ul>
+    </div>
+    
+    <footer>
+        <p>使用纯JavaScript制作的赛车游戏 | 使用Canvas渲染</p>
+    </footer>
+
+    <script>
+        // 获取Canvas和上下文
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 游戏状态
+        let game = {
+            running: false,
+            score: 0,
+            highScore: localStorage.getItem('highScore') || 0,
+            speed: 5,
+            passedCars: 0,
+            level: 1
+        };
+        
+        // 玩家赛车
+        const playerCar = {
+            x: canvas.width / 2 - 25,
+            y: canvas.height - 120,
+            width: 50,
+            height: 100,
+            speed: 0,
+            maxSpeed: 12,
+            acceleration: 0.2,
+            deceleration: 0.1,
+            color: '#e74c3c',
+            turningSpeed: 6
+        };
+        
+        // 道路
+        const road = {
+            width: 400,
+            x: (canvas.width - 400) / 2,
+            laneWidth: 400 / 3,
+            markings: []
+        };
+        
+        // 初始化道路标记
+        for (let i = 0; i < 10; i++) {
+            road.markings.push({
+                x: road.x + road.width / 2 - 5,
+                y: i * 60,
+                width: 10,
+                height: 30
+            });
+        }
+        
+        // 障碍车数组
+        let obstacleCars = [];
+        
+        // 按键状态
+        const keys = {};
+        
+        // 初始化游戏
+        function initGame() {
+            game.running = true;
+            game.score = 0;
+            game.speed = 5;
+            game.passedCars = 0;
+            game.level = 1;
+            
+            playerCar.x = canvas.width / 2 - 25;
+            playerCar.speed = 5;
+            
+            // 清空障碍车
+            obstacleCars = [];
+            
+            // 更新显示
+            updateDisplay();
+            
+            // 隐藏游戏结束消息
+            document.getElementById('gameMessage').style.display = 'none';
+            
+            // 开始游戏循环
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 生成随机障碍车
+        function generateObstacleCar() {
+            // 随机决定车道 (0: 左, 1: 中, 2: 右)
+            const lane = Math.floor(Math.random() * 3);
+            
+            // 计算x位置
+            const x = road.x + lane * road.laneWidth + (road.laneWidth - 50) / 2;
+            
+            // 随机颜色
+            const colors = ['#3498db', '#2ecc71', '#9b59b6', '#e67e22', '#1abc9c'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 创建障碍车
+            const car = {
+                x: x,
+                y: -100, // 从屏幕上方开始
+                width: 50,
+                height: 100,
+                speed: game.speed + Math.random() * 2,
+                color: color,
+                passed: false
+            };
+            
+            obstacleCars.push(car);
+        }
+        
+        // 更新游戏状态
+        function update() {
+            if (!game.running) return;
+            
+            // 更新玩家赛车位置
+            updatePlayerCar();
+            
+            // 更新道路标记
+            updateRoadMarkings();
+            
+            // 更新障碍车
+            updateObstacleCars();
+            
+            // 随机生成障碍车
+            if (Math.random() < 0.02) {
+                generateObstacleCar();
+            }
+            
+            // 更新游戏速度和等级
+            updateGameLevel();
+            
+            // 检查碰撞
+            checkCollisions();
+            
+            // 更新显示
+            updateDisplay();
+        }
+        
+        // 更新玩家赛车
+        function updatePlayerCar() {
+            // 处理加速/减速
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                playerCar.speed = Math.min(playerCar.speed + playerCar.acceleration, playerCar.maxSpeed);
+            } else if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                playerCar.speed = Math.max(playerCar.speed - playerCar.deceleration, 2);
+            } else {
+                // 自然减速
+                if (playerCar.speed > game.speed) {
+                    playerCar.speed = Math.max(playerCar.speed - playerCar.deceleration / 2, game.speed);
+                }
+            }
+            
+            // 处理转向
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                playerCar.x = Math.max(road.x, playerCar.x - playerCar.turningSpeed);
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                playerCar.x = Math.min(road.x + road.width - playerCar.width, playerCar.x + playerCar.turningSpeed);
+            }
+            
+            // 确保赛车在道路上
+            playerCar.x = Math.max(road.x, Math.min(road.x + road.width - playerCar.width, playerCar.x));
+        }
+        
+        // 更新道路标记
+        function updateRoadMarkings() {
+            for (let marking of road.markings) {
+                marking.y += playerCar.speed;
+                
+                // 如果标记移出屏幕，将其重置到顶部
+                if (marking.y > canvas.height) {
+                    marking.y = -marking.height;
+                }
+            }
+        }
+        
+        // 更新障碍车
+        function updateObstacleCars() {
+            for (let i = obstacleCars.length - 1; i >= 0; i--) {
+                const car = obstacleCars[i];
+                
+                // 更新位置
+                car.y += car.speed;
+                
+                // 如果障碍车移出屏幕，移除它
+                if (car.y > canvas.height) {
+                    obstacleCars.splice(i, 1);
+                    
+                    // 如果玩家成功躲避，增加分数
+                    if (!car.passed) {
+                        game.passedCars++;
+                        game.score += 10;
+                        car.passed = true;
+                    }
+                }
+                
+                // 检查是否已通过（用于计分）
+                if (!car.passed && car.y > playerCar.y + playerCar.height) {
+                    car.passed = true;
+                    game.passedCars++;
+                    game.score += 10;
+                }
+            }
+        }
+        
+        // 更新游戏等级和速度
+        function updateGameLevel() {
+            // 每得100分升一级
+            const newLevel = Math.floor(game.score / 100) + 1;
+            if (newLevel > game.level) {
+                game.level = newLevel;
+                game.speed = Math.min(5 + game.level, 15); // 最大速度为15
+            }
+        }
+        
+        // 检查碰撞
+        function checkCollisions() {
+            for (let car of obstacleCars) {
+                if (isColliding(playerCar, car)) {
+                    gameOver();
+                    break;
+                }
+            }
+        }
+        
+        // 碰撞检测函数
+        function isColliding(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        // 游戏结束
+        function gameOver() {
+            game.running = false;
+            
+            // 更新最高分
+            if (game.score > game.highScore) {
+                game.highScore = game.score;
+                localStorage.setItem('highScore', game.highScore);
+            }
+            
+            // 显示游戏结束消息
+            document.getElementById('finalScore').textContent = game.score;
+            document.getElementById('gameMessage').style.display = 'block';
+        }
+        
+        // 更新显示
+        function updateDisplay() {
+            document.getElementById('score').textContent = game.score;
+            document.getElementById('highScore').textContent = game.highScore;
+            document.getElementById('speed').textContent = Math.round(playerCar.speed * 10) / 10;
+            document.getElementById('passed').textContent = game.passedCars;
+        }
+        
+        // 绘制游戏
+        function draw() {
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            drawBackground();
+            
+            // 绘制道路
+            drawRoad();
+            
+            // 绘制道路标记
+            drawRoadMarkings();
+            
+            // 绘制障碍车
+            drawObstacleCars();
+            
+            // 绘制玩家赛车
+            drawPlayerCar();
+            
+            // 绘制游戏信息
+            drawGameInfo();
+        }
+        
+        // 绘制背景
+        function drawBackground() {
+            // 天空渐变
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#2c3e50');
+            gradient.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 山丘
+            ctx.fillStyle = '#34495e';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            ctx.bezierCurveTo(200, 300, 400, 400, canvas.width, canvas.height);
+            ctx.fill();
+        }
+        
+        // 绘制道路
+        function drawRoad() {
+            // 道路
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillRect(road.x, 0, road.width, canvas.height);
+            
+            // 道路边缘
+            ctx.fillStyle = '#555';
+            ctx.fillRect(road.x, 0, 10, canvas.height);
+            ctx.fillRect(road.x + road.width - 10, 0, 10, canvas.height);
+            
+            // 车道线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 20]);
+            
+            // 左车道线
+            ctx.beginPath();
+            ctx.moveTo(road.x + road.laneWidth, 0);
+            ctx.lineTo(road.x + road.laneWidth, canvas.height);
+            ctx.stroke();
+            
+            // 右车道线
+            ctx.beginPath();
+            ctx.moveTo(road.x + road.laneWidth * 2, 0);
+            ctx.lineTo(road.x + road.laneWidth * 2, canvas.height);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+        }
+        
+        // 绘制道路标记
+        function drawRoadMarkings() {
+            ctx.fillStyle = '#f1c40f';
+            for (let marking of road.markings) {
+                ctx.fillRect(marking.x, marking.y, marking.width, marking.height);
+            }
+        }
+        
+        // 绘制玩家赛车
+        function drawPlayerCar() {
+            // 赛车主体
+            ctx.fillStyle = playerCar.color;
+            ctx.fillRect(playerCar.x, playerCar.y, playerCar.width, playerCar.height);
+            
+            // 赛车细节
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(playerCar.x + 5, playerCar.y + 5, playerCar.width - 10, 20); // 前窗
+            ctx.fillRect(playerCar.x + 5, playerCar.y + 30, playerCar.width - 10, 40); // 侧窗
+            ctx.fillRect(playerCar.x + 5, playerCar.y + 75, playerCar.width - 10, 20); // 后窗
+            
+            // 车灯
+            ctx.fillStyle = '#f1c40f';
+            ctx.fillRect(playerCar.x + 5, playerCar.y, 10, 5); // 左前灯
+            ctx.fillRect(playerCar.x + playerCar.width - 15, playerCar.y, 10, 5); // 右前灯
+            
+            // 车轮
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(playerCar.x - 5, playerCar.y + 20, 5, 20); // 左前轮
+            ctx.fillRect(playerCar.x + playerCar.width, playerCar.y + 20, 5, 20); // 右前轮
+            ctx.fillRect(playerCar.x - 5, playerCar.y + 60, 5, 20); // 左后轮
+            ctx.fillRect(playerCar.x + playerCar.width, playerCar.y + 60, 5, 20); // 右后轮
+        }
+        
+        // 绘制障碍车
+        function drawObstacleCars() {
+            for (let car of obstacleCars) {
+                // 车主体
+                ctx.fillStyle = car.color;
+                ctx.fillRect(car.x, car.y, car.width, car.height);
+                
+                // 车窗
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(car.x + 5, car.y + 5, car.width - 10, 20); // 前窗
+                ctx.fillRect(car.x + 5, car.y + 30, car.width - 10, 40); // 侧窗
+                ctx.fillRect(car.x + 5, car.y + 75, car.width - 10, 20); // 后窗
+                
+                // 车灯
+                ctx.fillStyle = car.color === '#e67e22' ? '#f1c40f' : '#fff';
+                ctx.fillRect(car.x + 5, car.y, 10, 5); // 左前灯
+                ctx.fillRect(car.x + car.width - 15, car.y, 10, 5); // 右前灯
+                
+                // 车轮
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(car.x - 5, car.y + 20, 5, 20); // 左前轮
+                ctx.fillRect(car.x + car.width, car.y + 20, 5, 20); // 右前轮
+                ctx.fillRect(car.x - 5, car.y + 60, 5, 20); // 左后轮
+                ctx.fillRect(car.x + car.width, car.y + 60, 5, 20); // 右后轮
+            }
+        }
+        
+        // 绘制游戏信息
+        function drawGameInfo() {
+            // 等级显示
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(10, 10, 120, 40);
+            
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#f1c40f';
+            ctx.fillText(`等级: ${game.level}`, 20, 35);
+            
+            // 速度显示
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(canvas.width - 130, 10, 120, 40);
+            
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = playerCar.speed > game.speed + 2 ? '#e74c3c' : '#2ecc71';
+            ctx.fillText(`速度: ${Math.round(playerCar.speed * 10) / 10}`, canvas.width - 120, 35);
+        }
+        
+        // 游戏主循环
+        function gameLoop() {
+            update();
+            draw();
+            
+            if (game.running) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // 键盘事件监听
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // 防止箭头键滚动页面
+            if ([32, 37, 38, 39, 40].includes(e.keyCode)) {
+                e.preventDefault();
+            }
+            
+            // 空格键暂停/继续
+            if (e.key === ' ' && game.running) {
+                game.running = false;
+                document.getElementById('messageTitle').textContent = '游戏暂停';
+                document.getElementById('finalScore').textContent = game.score;
+                document.getElementById('gameMessage').style.display = 'block';
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // 重新开始按钮
+        document.getElementById('restartButton').addEventListener('click', initGame);
+        
+        // 初始显示最高分
+        updateDisplay();
+        
+        // 显示开始游戏消息
+        document.getElementById('messageTitle').textContent = 'JavaScript赛车游戏';
+        document.getElementById('finalScore').textContent = '点击按钮开始';
+        document.getElementById('gameMessage').style.display = 'block';
+    </script>
+</body>
+</html>
